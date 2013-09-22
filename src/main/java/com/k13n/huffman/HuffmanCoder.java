@@ -15,6 +15,13 @@ public class HuffmanCoder {
     root = buildHuffmanTable();
   }
 
+  private Set<Node> createLeavesFromAlphabet() {
+    Set<Node> leaves = new HashSet<>();
+    for (Letter letter : alphabet)
+      leaves.add(new Node(letter));
+    return leaves;
+  }
+
   private Node buildHuffmanTable() {
     Set<Node> nodes = new HashSet<Node>(leaves);
     while (nodes.size() != 1) {
@@ -27,19 +34,12 @@ public class HuffmanCoder {
     return root;
   }
 
-  private Set<Node> createLeavesFromAlphabet() {
-    Set<Node> leaves = new HashSet<>();
-    for (Letter letter : alphabet)
-      leaves.add(new Node(letter));
-    return leaves;
-  }
-
   private Node extractMinFrequencyNode(Set<Node> nodes) {
     double minFrequency = Double.MAX_VALUE;
     Node smallestNode = null;
     for (Node node : nodes) {
-      if (node.getFrequency() < minFrequency) {
-        minFrequency = node.getFrequency();
+      if (node.frequency < minFrequency) {
+        minFrequency = node.frequency;
         smallestNode = node;
       }
     }
@@ -58,9 +58,9 @@ public class HuffmanCoder {
     int offset = builder.length();
     Node leaf = getLeafOfLetter(letter);
     while (leaf != root) {
-      char digit = mapSideToDigit(leaf.getSide());
+      char digit = mapSideToDigit(leaf.side);
       builder.insert(offset, digit);
-      leaf = leaf.getParent();
+      leaf = leaf.parent;
     }
   }
 
@@ -70,7 +70,7 @@ public class HuffmanCoder {
     for (int i = 0; i < text.length(); i++) {
       currentNode = traverseTreeToNextDeeperNode(currentNode, text.charAt(i));
       if (currentNode.isLeave()) {
-        char letter = currentNode.getLetter().getLetter();
+        char letter = currentNode.letter.getLetter();
         builder.append(letter);
         currentNode = root;
       }
@@ -84,9 +84,9 @@ public class HuffmanCoder {
   private Node traverseTreeToNextDeeperNode(Node currentNode, char letter) {
     Side side = mapDigitToSide(letter);
     if (side == Side.LEFT)
-      currentNode = currentNode.getLeftChild();
+      currentNode = currentNode.leftChild;
     else
-      currentNode = currentNode.getRightChild();
+      currentNode = currentNode.rightChild;
     return currentNode;
   }
 
@@ -100,30 +100,22 @@ public class HuffmanCoder {
 
   private Node getLeafOfLetter(char letter) {
     for (Node leaf : leaves)
-      if (leaf.getLetter().getLetter() == letter)
+      if (leaf.letter.getLetter() == letter)
         return leaf;
     throw new NoSuchElementException("letter '" + letter
         + "' does not belong to the alphabet");
   }
 
-  public void dump() {
-    for (Node leaf : leaves) {
-      char letter = leaf.getLetter().getLetter();
-      String encoding = encode(Character.toString(letter));
-      System.out.println(letter + ": " + encoding);
-    }
-  }
-
-  private enum Side {
+  private static enum Side {
     LEFT, RIGHT;
   }
 
   private static final class Node {
-    private final double frequency;
-    private final Letter letter;
-    private final Node leftChild, rightChild;
-    private Node parent;
-    private Side side;
+    final double frequency;
+    final Letter letter;
+    final Node leftChild, rightChild;
+    Node parent;
+    Side side;
 
     private Node(double frequency, Node leftChild, Node rightChild) {
       this.frequency = frequency;
@@ -139,49 +131,17 @@ public class HuffmanCoder {
       this.frequency = letter.getFrequency();
     }
 
-    public double getFrequency() {
-      return frequency;
-    }
-
-    public Node getLeftChild() {
-      return leftChild;
-    }
-
-    public Letter getLetter() {
-      return letter;
-    }
-
-    public Node getParent() {
-      return parent;
-    }
-
-    private void setParent(Node parent) {
-      this.parent = parent;
-    }
-
-    public Node getRightChild() {
-      return rightChild;
-    }
-
-    public void setSide(Side side) {
-      this.side = side;
-    }
-
-    public Side getSide() {
-      return side;
-    }
-
     public boolean isLeave() {
       return letter != null;
     }
 
     public static Node merge(Node leftChild, Node rightChild) {
-      double frequency = leftChild.getFrequency() + rightChild.getFrequency();
+      double frequency = leftChild.frequency + rightChild.frequency;
       Node parent = new Node(frequency, leftChild, rightChild);
-      leftChild.setParent(parent);
-      leftChild.setSide(Side.LEFT);
-      rightChild.setParent(parent);
-      rightChild.setSide(Side.RIGHT);
+      leftChild.parent = parent;
+      leftChild.side = Side.LEFT;
+      rightChild.parent = parent;
+      rightChild.side = Side.RIGHT;
       return parent;
     }
 
