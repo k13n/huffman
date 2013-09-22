@@ -1,7 +1,10 @@
 package com.k13n.huffman;
 
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.NoSuchElementException;
+import java.util.PriorityQueue;
+import java.util.Queue;
 import java.util.Set;
 
 public class HuffmanCoder {
@@ -23,28 +26,26 @@ public class HuffmanCoder {
   }
 
   private Node buildHuffmanTable() {
-    Set<Node> nodes = new HashSet<Node>(leaves);
-    while (nodes.size() != 1) {
-      Node rightChild = extractMinFrequencyNode(nodes);
-      Node leftChild = extractMinFrequencyNode(nodes);
+    Queue<Node> heap = newMinFrequencyHeapFromLeaves();
+    while (heap.size() != 1) {
+      Node rightChild = heap.poll();
+      Node leftChild = heap.poll();
       Node parent = Node.merge(leftChild, rightChild);
-      nodes.add(parent);
+      heap.add(parent);
     }
-    Node root = nodes.iterator().next();
+    Node root = heap.poll();
     return root;
   }
 
-  private Node extractMinFrequencyNode(Set<Node> nodes) {
-    double minFrequency = Double.MAX_VALUE;
-    Node smallestNode = null;
-    for (Node node : nodes) {
-      if (node.frequency < minFrequency) {
-        minFrequency = node.frequency;
-        smallestNode = node;
+  private Queue<Node> newMinFrequencyHeapFromLeaves() {
+    int size = leaves.size();
+    PriorityQueue<Node> heap = new PriorityQueue<>(size, new Comparator<Node>() {
+      @Override public int compare(Node node1, Node node2) {
+        return Double.compare(node1.frequency, node2.frequency);
       }
-    }
-    nodes.remove(smallestNode);
-    return smallestNode;
+    });
+    heap.addAll(leaves);
+    return heap;
   }
 
   public String encode(String text) {
